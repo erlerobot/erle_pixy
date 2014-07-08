@@ -13,11 +13,7 @@
 // end license header
 //
 
-#include <QDebug>
 #include "usblink.h"
-#include "pixy.h"
-
-
 
 USBLink::USBLink()
 {

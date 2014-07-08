@@ -12,178 +12,20 @@
 //
 // end license header
 //
-
-#include <QDebug>
-#include <QMutexLocker>
 #include <stdexcept>
 #include "chirpmon.h"
 #include <iostream>
-//#include "interpreter.h"
-struct Frame8
-{
-    Frame8()
-    {
-        m_pixels = (uint8_t *)NULL;
-        m_width = m_height = 0;
-    }
 
-    Frame8(uint8_t *pixels, uint16_t width, uint16_t height)
-    {
-        m_pixels = pixels;
-        m_width = width;
-        m_height = height;
-    }
-
-    uint8_t *m_pixels;
-    int16_t m_width;
-    int16_t m_height;
-};
-Frame8 m_rawFrame;
-
-inline void interpolateBayer(unsigned int width, unsigned int x, unsigned int y, unsigned char *pixel, unsigned int &r, unsigned int &g, unsigned int &b)
-{
-#if 1
-    if (y&1)
-    {
-        if (x&1)
-        {
-            r = *pixel;
-            g = (*(pixel-1)+*(pixel+1)+*(pixel+width)+*(pixel-width))>>2;
-            b = (*(pixel-width-1)+*(pixel-width+1)+*(pixel+width-1)+*(pixel+width+1))>>2;
-        }
-        else
-        {
-            r = (*(pixel-1)+*(pixel+1))>>1;
-            g = *pixel;
-            b = (*(pixel-width)+*(pixel+width))>>1;
-        }
-    }
-    else
-    {
-        if (x&1)
-        {
-            r = (*(pixel-width)+*(pixel+width))>>1;
-            g = *pixel;
-            b = (*(pixel-1)+*(pixel+1))>>1;
-        }
-        else
-        {
-            r = (*(pixel-width-1)+*(pixel-width+1)+*(pixel+width-1)+*(pixel+width+1))>>2;
-            g = (*(pixel-1)+*(pixel+1)+*(pixel+width)+*(pixel-width))>>2;
-            b = *pixel;
-        }
-    }
-#endif
-#if 0
-    if (y&1)
-    {
-        if (x&1)
-        {
-            r = *pixel;
-            g = (*(pixel-1)+*(pixel+1))>>1;
-            b = (*(pixel-width-1)+*(pixel-width+1))>>1;
-        }
-        else
-        {
-            r = (*(pixel-1)+*(pixel+1))>>1;
-            g = *pixel;
-            b = *(pixel-width);
-        }
-    }
-    else
-    {
-        if (x&1)
-        {
-            r = *(pixel+width);
-            g = *pixel;
-            b = (*(pixel-1)+*(pixel+1))>>1;
-        }
-        else
-        {
-            r = (*(pixel+width-1)+*(pixel+width+1))>>1;
-            g = (*(pixel-1)+*(pixel+1))>>1;
-            b = *pixel;
-        }
-    }
-#endif
-#if 0
-    if (y&1)
-    {
-        if (x&1)
-        {
-            r = *pixel;
-            g = (*(pixel-1)+*(pixel+1))>>1;
-            b = (*(pixel-width-1)+*(pixel-width+1))>>1;
-        }
-        else
-        {
-            r = (*(pixel-1)+*(pixel+1))>>1;
-            g = *pixel;
-            b = *(pixel-width);
-        }
-    }
-    else
-    {
-        if (x&1)
-        {
-            r = *(pixel-width);
-            g = *pixel;
-            b = (*(pixel-1)+*(pixel+1))>>1;
-        }
-        else
-        {
-            r = (*(pixel-width-1)+*(pixel-width+1))>>1;
-            g = (*(pixel-1)+*(pixel+1))>>1;
-            b = *pixel;
-        }
-    }
-#endif
-#if 0
-    if (y&1)
-    {
-        if (x&1)
-        {
-            r = *pixel;
-            g = *(pixel-1);
-            b = *(pixel-width-1);
-        }
-        else
-        {
-            r = *(pixel-1);
-            g = *pixel;
-            b = *(pixel-width);
-        }
-    }
-    else
-    {
-        if (x&1)
-        {
-            r = *(pixel-width);
-            g = *pixel;
-            b = *(pixel-1);
-        }
-        else
-        {
-            r = *(pixel-width-1);
-            g = *(pixel-1);
-            b = *pixel;
-        }
-    }
-#endif
-}
-
-
-ChirpMon::ChirpMon(/*Interpreter *interpreter,*/ USBLink *link) : m_mutex(QMutex::Recursive)
+ChirpMon::ChirpMon(PixyCam* pixycam, USBLink *link)
 {
     m_hinterested = true;
     m_client = true;
-//    m_interpreter = interpreter;
 
     if (setLink((Link*)link)<0)
-        //std::cout << "ChirpMon: runtime_error Unable to connect to device." <<std::endl;
         throw std::runtime_error("Unable to connect to device.");
-    m_rawFrame.m_pixels = new uint8_t[0x10000];
 
+    // inicialize memory
+    this->pixycam = pixycam;
 }
 
 ChirpMon::~ChirpMon()
@@ -198,8 +40,7 @@ int ChirpMon::serviceChirp()
     void *args[CRP_MAX_ARGS+1];
     int res;
 
-    while(1)
-    {
+    while(1){
         if ((res=recvChirp(&type, &recvProc, args, true))<0)
             return res;
         handleChirp(type, recvProc, args);
@@ -224,15 +65,12 @@ QString printType(uint32_t val)
     val2 >>= 8;
     d = (QChar)(val2&0xff);
 
-    if (a.isPrint() && b.isPrint() && c.isPrint() && d.isPrint())
-    {
+    if (a.isPrint() && b.isPrint() && c.isPrint() && d.isPrint()){
         if (parens)
             res = QString("FOURCC(") + a + b + c + d + ")";
         else
             res = QString(a) + b + c + d;
-    }
-    else
-    {
+    }else{
         if (parens)
             res = "HTYPE(0x" + QString::number((uint)val, 16) + ")";
         else
@@ -260,81 +98,6 @@ int ChirpMon::handleChirp(uint8_t type, ChirpProc proc, void *args[])
     return Chirp::handleChirp(type, proc, args);
 }
 
-int renderBA81(uint8_t renderFlags, uint16_t width, uint16_t height, uint32_t frameLen, uint8_t *frame)
-{
-    uint16_t x, y;
-    uint32_t *line;
-    uint32_t r, g, b;
-
-    memcpy(m_rawFrame.m_pixels, frame, width*height);
-    m_rawFrame.m_width = width;
-    m_rawFrame.m_height = height;
-
-    // skip first line
-    frame += width;
-
-    // don't render top and bottom rows, and left and rightmost columns because of color
-    // interpolation
-    QImage img(width-2, height-2, QImage::Format_RGB32);
-    cv::Mat imagen;
-    imagen.create(height, width, CV_8UC3);
-
-    for (y=1; y<height-1; y++)
-    {
-        line = (unsigned int *)img.scanLine(y-1);
-        frame++;
-        for (x=1; x<width-1; x++, frame++)
-        {
-            interpolateBayer(width, x, y, frame, r, g, b);
-            // simulate 15 bit color r >>= 4; g >>= 4; b >>= 4; r <<= 4; g <<= 4; b <<= 4;
-            *line++ = (0x40<<24) | (r<<16) | (g<<8) | (b<<0);
-            int indice = y*imagen.step+x*imagen.channels();
-              imagen.data[indice]=(u_int8_t)b;
-              imagen.data[indice+1]=(u_int8_t)g;
-              imagen.data[indice+2]=(u_int8_t)g;
-
-        }
-        frame++;
-    }
-
-    cv::imshow("imagen", imagen);
-    cv::waitKey(20);
-    img.save("image.jpg");
-
-
-    // send image to ourselves across threads
-    // from chirp thread to gui thread
-//    emitImage(img);
-
-  //  m_background = img;
-
-    //if (renderFlags&RENDER_FLAG_FLUSH)
-    //    emitFlushImage();
-
-    return 0;
-}
-
-int render(uint32_t type, void *args[])
-{
-    int res;
-
-    // choose fourcc for representing formats fourcc.org
-    if (type==FOURCC('B','A','8','1')){
-        std::cout << "renderBA81" << std::endl;
-        res = renderBA81(*(uint8_t *)args[0], *(uint16_t *)args[1], *(uint16_t *)args[2], *(uint32_t *)args[3], (uint8_t *)args[4]);
-    }else if (type==FOURCC('C','C','Q','1')){
-        std::cout << "renderCCQ1" << std::endl;
-    //    res = renderCCQ1(*(uint8_t *)args[0], *(uint16_t *)args[1], *(uint16_t *)args[2], *(uint32_t *)args[3], (uint32_t *)args[4]);
-    }else if (type==FOURCC('C', 'C', 'B', '1')){
-        std::cout << "renderCCB1" << std::endl;
-    }else if (type==FOURCC('C', 'M', 'V', '1')){
-        std::cout << "renderCMV1" << std::endl;
-//        res = renderCMV1(*(uint8_t *)args[0], *(uint32_t *)args[1], (float *)args[2], *(uint16_t *)args[3], *(uint32_t *)args[4], *(uint32_t *)args[5], (uint8_t *)args[6]);
-    }else{ // format not recognized
-        return -1;
-    }
-    return res;
-}
 void ChirpMon::handleData(void *args[])
 {
     uint8_t type;
@@ -344,14 +107,14 @@ void ChirpMon::handleData(void *args[])
         if (type==CRP_TYPE_HINT)
         {
             m_print += printType(*(uint32_t *)args[0]) + " frame data\n";
-            render(*(uint32_t *)args[0], args+1);
+            pixycam->render(*(uint32_t *)args[0], args+1);
         }
         else if (type==CRP_HSTRING)
         {
             m_print +=  (char *)args[0];
         }
         else
-            qDebug() << "unknown type " << type;
+            std::cout <<"unknown type " << type << std::endl;
     }
     if (m_print.right(1)!="\n")
         m_print += "\n";
@@ -364,21 +127,10 @@ void ChirpMon::handleXdata(void *data[])
 }
 
 int ChirpMon::sendChirp(uint8_t type, ChirpProc proc)
-{   // this is only called when we call call()
+{
+    // this is only called when we call call()
     int res;
 
-    // if we're programming (defining the program), put all the calls in m_program
-    // otherwise pass the call the Chirp::sendChirp() so it gets sent out.
-    // todo: save the call and use the chirp thread to send (so send and receive are handled by
-    // same thread. not sure how important that is...)
- /*   if (m_interpreter->m_programming && !(type&CRP_INTRINSIC))
-    {
-        // put on queue
-        // only copy data (not header).  Header hasn't been written to buffer yet.
-        m_interpreter->addProgram(ChirpCallData(type, proc, m_buf+m_headerLen, m_len));
-        return 0;
-    }
-*/
     res = Chirp::sendChirp(type, proc);
 
     return res;
@@ -387,7 +139,6 @@ int ChirpMon::sendChirp(uint8_t type, ChirpProc proc)
 
 int ChirpMon::execute(const ChirpCallData &data)
 {
-    QMutexLocker locker(&m_mutex);
     int res;
 
     // copy into chirp buffer-- remember to skip the header space
