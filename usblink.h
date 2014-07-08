@@ -19,6 +19,8 @@
 #include "common/link.h"
 #include <QTime>
 #include "libusb.h"
+#include "usblink.h"
+#include "pixy.h"
 
 class USBLink : public Link
 {

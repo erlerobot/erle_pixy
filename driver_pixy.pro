@@ -2,14 +2,18 @@ SOURCES += \
     main.cpp \
     usblink.cpp \
     chirpmon.cpp \
-    common/chirp.cpp
+    common/chirp.cpp \
+    pixycam.cpp \
+    helpFunctions.cpp
 
 HEADERS += \
     usblink.h \
     pixy.h \
     common/link.h \
     chirpmon.h \
-    common/chirp.hpp
+    common/chirp.hpp \
+    helpFunctions.h \
+    pixycam.h
 
 QMAKE_CXXFLAGS_DEBUG += -O0
 QMAKE_CXXFLAGS += -Wno-unused-parameter

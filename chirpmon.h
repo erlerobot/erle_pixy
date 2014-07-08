@@ -16,19 +16,17 @@
 #ifndef CHIRPTHREAD_H
 #define CHIRPTHREAD_H
 
-#include <QMutex>
 #include "common/chirp.hpp"
 #include "string.h"
-#include <QImage>
-#include <QPainter>
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
+#include "pixycam.h"
 
-class Interpreter;
 class USBLink;
+class PixyCam;
 
 struct ChirpCallData
 {
@@ -54,7 +52,7 @@ struct ChirpCallData
 class ChirpMon : public Chirp
 {
 public:
-    ChirpMon(USBLink *link);
+    ChirpMon(PixyCam *pixycam, USBLink *link);
     virtual ~ChirpMon();
 
     int serviceChirp();
@@ -62,7 +60,7 @@ public:
     QString m_print;
     void handleData(void *args[]);
 
-    QMutex m_mutex;
+    PixyCam* pixycam;
 
 protected:
     virtual int handleChirp(uint8_t type, ChirpProc proc, void *args[]); // null pointer terminates
