@@ -15,6 +15,7 @@ class MiThread(threading.Thread):
         ret = self.cap.set(4,240)
         print "Constructor thread"
         self.stop = 0
+        self.lock = threading.Lock()  
         threading.Thread.__init__(self)  
  
     def run(self):  
@@ -22,8 +23,9 @@ class MiThread(threading.Thread):
             
             start_time = datetime.now()
 
+            self.lock.acquire();
             ret, self.img = self.cap.read()
-
+            self.lock.release();
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
@@ -35,14 +37,20 @@ class MiThread(threading.Thread):
                 time.sleep((time_cycle-ms) / 1000.0);
             if (self.stop==1):
                 break;
+
     def getImage(self):
-        return self.img
+        self.lock.acquire();
+        imagen_result = self.img.copy()
+        self.lock.release();
+        return imagen_result
+
     def setStop(self):
         self.stop =1;
 
 class ImageProvider(Image.ImageProvider):
     def __init__(self, t):
         self.t = t
+
     def getImageData(self, current=None):
         #ret, img = cap.read()
         img = self.t.getImage()
@@ -50,7 +58,6 @@ class ImageProvider(Image.ImageProvider):
         data.width = img.shape[0]
         data.height = img.shape[1]
         data.imageData = img
-        print "imagen pedida"
         return data
 
 status = 0
