@@ -65,9 +65,24 @@ int USBLink::send(const uint8_t *data, uint32_t len, uint16_t timeoutMs)
     if (timeoutMs==0) // 0 equals infinity
         timeoutMs = 10;
 
+    std::cout << "timeoutMs:" <<timeoutMs << std::endl;
+
     if ((res=libusb_bulk_transfer(m_handle, 0x02, (unsigned char *)data, len, &transferred, timeoutMs))<0)
     {
-        qDebug("libusb_bulk_write %d", res);
+        if(res==LIBUSB_ERROR_TIMEOUT){
+            std::cout << "LIBUSB_ERROR_TIMEOUT:" << std::endl;
+        }
+        if(res==LIBUSB_ERROR_PIPE){
+            std::cout << "LIBUSB_ERROR_PIPE:" << std::endl;
+        }
+        if(res==LIBUSB_ERROR_OVERFLOW ){
+            std::cout << "LIBUSB_ERROR_OVERFLOW :" << std::endl;
+        }
+        if(res==LIBUSB_ERROR_NO_DEVICE){
+            std::cout << "LIBUSB_ERROR_NO_DEVICE:" << std::endl;
+        }
+
+        std::cout << "libusb_bulk_write "<< res << std::endl; ;
         return res;
     }
     return transferred;
@@ -82,7 +97,7 @@ int USBLink::receive(uint8_t *data, uint32_t len, uint16_t timeoutMs)
 
     if ((res=libusb_bulk_transfer(m_handle, 0x82, (unsigned char *)data, len, &transferred, timeoutMs))<0)
     {
-        qDebug("libusb_bulk_read %d", res);
+        std::cout << "libusb_bulk_read "<< res << std::endl; ;
         return res;
     }
     return transferred;
@@ -90,12 +105,11 @@ int USBLink::receive(uint8_t *data, uint32_t len, uint16_t timeoutMs)
 
 void USBLink::setTimer()
 {
-    m_time.start();
 }
 
 uint32_t USBLink::getTimer()
 {
-    return m_time.elapsed();
+    return 1;
 }
 
 

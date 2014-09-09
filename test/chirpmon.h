@@ -57,7 +57,7 @@ public:
 
     int serviceChirp();
 
-    QString m_print;
+    std::string m_print;
     void handleData(void *args[]);
 
     PixyCam* pixycam;

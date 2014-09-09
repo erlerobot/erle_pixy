@@ -17,10 +17,10 @@
 #define _USBLINK_H
 
 #include "common/link.h"
-#include <QTime>
 #include "libusb.h"
 #include "usblink.h"
 #include "pixy.h"
+#include <iostream>
 
 class USBLink : public Link
 {
@@ -37,7 +37,6 @@ public:
 private:
     libusb_context *m_context;
     libusb_device_handle *m_handle;
-    QTime m_time;
 };
 #endif
 

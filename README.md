@@ -17,14 +17,4 @@ To do this copy the 'pixy.rules' file to '/etc/udev/rules.d'
 sudo cp pixy.rules /etc/udev/rules.d/
 ```
 
-#Compile the code 
-```
->>mkdir build
->>cd build
->>cmake ..
->>make
-```
-#Execute
-```
->>./pixy_cam
-```
+

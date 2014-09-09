@@ -37,11 +37,14 @@ int PixyCam::renderBA81(uint8_t renderFlags, uint16_t width, uint16_t height, ui
     if(this->height==0 & this->width==0){
         this->height=height;
         this->width=width;
+        mutex.lock();
         imagen.create(height, width, CV_8UC3);
+        mutex.unlock();
     }
     // skip first line
     frame += width;
 
+    mutex.lock();
     // don't render top and bottom rows, and left and rightmost columns because of color
     // interpolation
     for (y=1; y<height-1; y++)
@@ -60,6 +63,7 @@ int PixyCam::renderBA81(uint8_t renderFlags, uint16_t width, uint16_t height, ui
         }
         frame++;
     }
+    mutex.unlock();
 
     return 0;
 }
@@ -70,7 +74,7 @@ int PixyCam::render(uint32_t type, void *args[])
 
     // choose fourcc for representing formats fourcc.org
     if (type==FOURCC('B','A','8','1')){
-        std::cout << "renderBA81" << std::endl;
+        //std::cout << "renderBA81" << std::endl;
         res = renderBA81(*(uint8_t *)args[0], *(uint16_t *)args[1], *(uint16_t *)args[2], *(uint32_t *)args[3], (uint8_t *)args[4]);
     }else if (type==FOURCC('C','C','Q','1')){
         std::cout << "impossible to renderCCQ1" << std::endl;
@@ -173,12 +177,17 @@ void PixyCam::run()
             int res, running;
 
             res = m_chirp->callSync(m_exec_running, END_OUT_ARGS, &running, END_IN_ARGS);
-            qDebug("running %d %d", res, running);
-            cv::imshow("imagen", imagen);
-            cv::waitKey(20);
-
             continue;
         }
         msleep(1000);
     }
 }
+
+cv::Mat PixyCam::getImage()
+{
+    cv::Mat result;
+    mutex.lock();
+    imagen.copyTo(result);
+    mutex.unlock();
+    return result;
+}   
