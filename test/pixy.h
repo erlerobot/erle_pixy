@@ -20,9 +20,9 @@
 #include <stdint.h>
 
 enum Device {NONE, PIXY, PIXY_DFU};
-#define VER_MAJOR       0
-#define VER_MINOR       1
-#define VER_BUILD       49
+#define VER_MAJOR       1
+#define VER_MINOR       0
+#define VER_BUILD       2
 
 
 #define PIXY_VID            0xb1ac

@@ -50,34 +50,48 @@ int ChirpMon::serviceChirp()
     return 0;
 }
 
-QString printType(uint32_t val)
+std::string printType(uint32_t val)
 {
     bool parens=false;
-    QString res;
-    QChar a, b, c, d;
+    std::string res_s;
+    char a_c, b_c, c_c, d_c;
     uint32_t val2 = val;
+    a_c = (char)(val2&0xff);
+    val2 >>= 8;
+    b_c = (char)(val2&0xff);
+    val2 >>= 8;
+    c_c = (char)(val2&0xff);
+    val2 >>= 8;
+    d_c = (char)(val2&0xff);
 
-    a = (QChar)(val2&0xff);
-    val2 >>= 8;
-    b = (QChar)(val2&0xff);
-    val2 >>= 8;
-    c = (QChar)(val2&0xff);
-    val2 >>= 8;
-    d = (QChar)(val2&0xff);
 
-    if (a.isPrint() && b.isPrint() && c.isPrint() && d.isPrint()){
-        if (parens)
-            res = QString("FOURCC(") + a + b + c + d + ")";
-        else
-            res = QString(a) + b + c + d;
+    if (true){
+        if (parens){
+            res_s = std::string("FOURCC(");
+            res_s.push_back(a_c);
+            res_s.push_back(b_c);
+            res_s.push_back(c_c);
+            res_s.push_back(d_c);
+            res_s+=")";
+        }else{
+            res_s.push_back(a_c);
+            res_s.push_back(b_c);
+            res_s.push_back(c_c);
+            res_s.push_back(d_c);
+        }
     }else{
-        if (parens)
-            res = "HTYPE(0x" + QString::number((uint)val, 16) + ")";
-        else
-            res = "0x" + QString::number((uint)val, 16);
+        std::stringstream stream;
+        stream << std::hex << val;
+        std::string result( stream.str() );
+
+        if (parens){
+            res_s = "HTYPE(0x" + result + ")";
+        }else{
+            res_s = "0x" + result;
+        }
     }
 
-    return res;
+    return res_s;
 }
 
 int ChirpMon::handleChirp(uint8_t type, ChirpProc proc, void *args[])
@@ -86,8 +100,14 @@ int ChirpMon::handleChirp(uint8_t type, ChirpProc proc, void *args[])
     {
         // strip off response, add to print string
         //    m_print = "response " + QString::number(m_rcount++) + ": " +
-        m_print = "response: " +
-                QString::number(*(int *)args[0]) + " (0x" + QString::number((uint)*(uint *)args[0], 16) + ") ";
+
+        std::stringstream stream;
+        stream << *(int *)args[0];
+        stream << " (0x";
+        stream << std::hex << (uint)*(uint *)args[0], 16;
+        stream << ")";
+
+        m_print = stream.str();
 
         // render rest of response, if present
         handleData(args+1);
@@ -116,7 +136,7 @@ void ChirpMon::handleData(void *args[])
         else
             std::cout <<"unknown type " << type << std::endl;
     }
-    if (m_print.right(1)!="\n")
+    if (m_print[m_print.size()-1]!= '\n')
         m_print += "\n";
 }
 

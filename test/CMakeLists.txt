@@ -38,17 +38,23 @@ link_directories( ${opencv_library_dirs})
 include_directories(${libusb_INCLUDE_DIRS})
 link_directories( ${libusb_library_dirs})
 
+include_directories(${OpenCV_INCLUDE_DIRS})
+link_directories( ${OpenCV_library_dirs})
+
 add_executable( pixy_cam main.cpp 
     usblink.cpp 
     chirpmon.cpp 
     common/chirp.cpp
     ${qt_HEADERS_MOC}
 )
+
+
+Message(${OpenCV_LIBRARIES})
 			   
 target_link_libraries(pixy_cam
-	opencv_imgproc opencv_highgui opencv_core usb-1.0
+	usb-1.0
 	${QT_LIBRARIES}
-	
+    ${OpenCV_LIBRARIES}
 )
 
 

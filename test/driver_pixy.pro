@@ -26,8 +26,8 @@ unix:!macx {
     INCLUDEPATH += /usr/include/libusb-1.0
 
 #opencv
-INCLUDEPATH += /usr/local/include/opencv
-LIBS += -L/usr/local/lib \
+INCLUDEPATH += /opt/ros/hydro/include
+LIBS += -L/opt/ros/hydro/lib \
     -lopencv_core \
     -lopencv_highgui \
     -lopencv_imgproc
