@@ -1,7 +1,6 @@
 #include "ros/ros.h"
 
 #include <sensor_msgs/fill_image.h>
-#include <self_test/self_test.h>
 #include <image_transport/image_transport.h>
 
 #include <sstream>
@@ -29,19 +28,15 @@ int main(int argc, char **argv)
     cv::Mat frame;
     cv::VideoCapture cap("http://10.5.5.9:8080/live/amba.m3u8");
 
-    int count = 0;
     while (ros::ok()){
         cap>> frame;
 
         fillImage(img_, "bgr8", frame.rows, frame.cols, frame.channels() * frame.cols, frame.data);
-        cv::imshow("imagen", frame);
-        cv::waitKey(20);
 
         image_pub.publish(img_);
         ros::spinOnce();
 
         loop_rate.sleep();
-        ++count;
     }
     return 0;
 }
