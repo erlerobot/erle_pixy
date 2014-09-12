@@ -176,7 +176,6 @@ void PixyCam::run()
             std::cout << "running " <<  res <<  running <<std::endl;
             cv::imshow("imagen", imagen);
             cv::waitKey(20);
-
             continue;
         }
         msleep(1000);

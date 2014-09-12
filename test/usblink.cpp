@@ -50,13 +50,11 @@ int USBLink::open()
         m_handle = 0;
         return -1;
     }
-#ifdef __LINUX__
+
     libusb_reset_device(m_handle);
-#endif
+
     return 0;
 }
-
-
 
 int USBLink::send(const uint8_t *data, uint32_t len, uint16_t timeoutMs)
 {
