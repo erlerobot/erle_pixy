@@ -1,7 +1,6 @@
 #include "ros/ros.h"
 
 #include <sensor_msgs/fill_image.h>
-#include <self_test/self_test.h>
 #include <image_transport/image_transport.h>
 
 #include <sstream>
@@ -9,6 +8,8 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
+
+#include <boost/thread.hpp>
 
 #include "pixycam.h"
 
